@@ -1,8 +1,9 @@
 package znet
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
+	"game-demo/utils"
 	"game-demo/ziface"
 	"net"
 )
@@ -16,18 +17,19 @@ type Server struct {
 	IP string
 	// 服务器监听的端口
 	Port int
+
+	Router ziface.IRouter
 }
 
-func CallBackToClient(conn *net.TCPConn, data []byte, cnt int) error {
-	fmt.Println("[Conn handle callBackToClient]...")
-	if _, err := conn.Write(data[:cnt]); err != nil {
-		fmt.Println("Write Back error", err)
-		return errors.New("CallbackToClient error")
-	}
-	return nil
+func (s *Server) AddRouter(router ziface.IRouter) {
+	s.Router = router
+	fmt.Println("Add Router success!")
 }
 
 func (s *Server) Start() {
+	marshal, _ := json.Marshal(s)
+	fmt.Println("server config ", string(marshal))
+
 	fmt.Printf("[start server] at IP: %s,Port: %d", s.IP, s.Port)
 	go func() {
 		// 1.获取tcp的addr
@@ -52,7 +54,7 @@ func (s *Server) Start() {
 				fmt.Println("Accept err", err)
 				continue
 			}
-			dealConn := NewConnection(conn, cid, CallBackToClient)
+			dealConn := NewConnection(conn, cid, s.Router)
 			cid++
 			go dealConn.Start()
 		}
@@ -73,9 +75,10 @@ func (s *Server) Serve() {
 
 func NewServer(name string) ziface.IServer {
 	return &Server{
-		Name:      name,
+		Name:      utils.GlobalObject.Name,
 		IPVersion: "tcp4",
-		IP:        "0.0.0.0",
-		Port:      8999,
+		IP:        utils.GlobalObject.Host,
+		Port:      utils.GlobalObject.TcpPort,
+		Router:    nil,
 	}
 }

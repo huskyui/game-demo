@@ -14,9 +14,9 @@ type Connection struct {
 
 	IsClose bool
 
-	handleApi ziface.HandleFunc
-
 	ExitChan chan bool
+
+	Router ziface.IRouter
 }
 
 func (c *Connection) StartReader() {
@@ -25,16 +25,21 @@ func (c *Connection) StartReader() {
 	defer c.Stop()
 	for {
 		buf := make([]byte, 512)
-		cnt, err := c.Conn.Read(buf)
+		_, err := c.Conn.Read(buf)
 		if err != nil {
 			fmt.Println("recv buf err", err)
 			continue
 		}
-		// 调用当前链接所绑定的HandleAPI
-		if err := c.handleApi(c.Conn, buf, cnt); err != nil {
-			fmt.Println("ConnId", c.ConnID, " handle is error", err)
-			break
+		req := Request{
+			connection: c,
+			data:       buf,
 		}
+
+		go func(request ziface.IRequest) {
+			c.Router.PreHandle(request)
+			c.Router.Handle(request)
+			c.Router.PostHandle(request)
+		}(&req)
 	}
 
 }
@@ -73,13 +78,13 @@ func (c *Connection) Send(data []byte) error {
 }
 
 // 初始化链接
-func NewConnection(conn *net.TCPConn, connId uint32, callBack ziface.HandleFunc) *Connection {
+func NewConnection(conn *net.TCPConn, connId uint32, router ziface.IRouter) *Connection {
 	c := &Connection{
-		Conn:      conn,
-		ConnID:    connId,
-		handleApi: callBack,
-		IsClose:   false,
-		ExitChan:  make(chan bool, 1),
+		Conn:     conn,
+		ConnID:   connId,
+		IsClose:  false,
+		ExitChan: make(chan bool, 1),
+		Router:   router,
 	}
 	return c
 }
