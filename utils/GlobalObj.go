@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"encoding/json"
 	"game-demo/ziface"
-	"os"
 )
 
 type GlobalObj struct {
@@ -22,11 +20,11 @@ type GlobalObj struct {
 var GlobalObject *GlobalObj
 
 func (g *GlobalObj) Reload() {
-	data, err := os.ReadFile("conf/zinx.json")
-	if err != nil {
-		panic(err)
-	}
-	json.Unmarshal(data, &GlobalObject)
+	//data, err := os.ReadFile("conf/zinx.json")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//json.Unmarshal(data, &GlobalObject)
 }
 
 // 初始化GlobalObject
