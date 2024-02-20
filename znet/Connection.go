@@ -1,8 +1,10 @@
 package znet
 
 import (
+	"errors"
 	"fmt"
 	"game-demo/ziface"
+	"io"
 	"net"
 )
 
@@ -23,16 +25,35 @@ func (c *Connection) StartReader() {
 	fmt.Println("Reader Goroutine is running")
 	defer fmt.Println("connID=", c.ConnID, " Reader is exit,remote addr is ", c.RemoteAddr().String())
 	defer c.Stop()
+
 	for {
-		buf := make([]byte, 512)
-		_, err := c.Conn.Read(buf)
+		dp := NewDataPack()
+		headLen := dp.GetHeadLen()
+		headData := make([]byte, headLen)
+		_, err := io.ReadFull(c.Conn, headData)
 		if err != nil {
-			fmt.Println("recv buf err", err)
-			continue
+			fmt.Println("read head data error", err)
+			break
+		}
+		msg, err := dp.UnPack(headData)
+		if err != nil {
+			fmt.Println("unpack head data error", err)
+			break
+		}
+
+		var data []byte
+		if msg.GetMsgLen() > 0 {
+			data = make([]byte, msg.GetMsgLen())
+			_, err := io.ReadFull(c.Conn, data)
+			if err != nil {
+				fmt.Println("read full error")
+				break
+			}
+			msg.SetData(data)
 		}
 		req := Request{
 			connection: c,
-			data:       buf,
+			msg:        msg,
 		}
 
 		go func(request ziface.IRequest) {
@@ -72,9 +93,22 @@ func (c *Connection) RemoteAddr() net.Addr {
 	return c.Conn.RemoteAddr()
 }
 
-func (c *Connection) Send(data []byte) error {
-	//TODO implement me
-	panic("implement me")
+func (c *Connection) Send(msgId uint32, data []byte) error {
+	if c.IsClose == true {
+		return errors.New("Connection closed when send msg")
+	}
+	dp := NewDataPack()
+	msg := NewMessagePack(msgId, data)
+	pack, err := dp.Pack(msg)
+	if err != nil {
+		fmt.Println("pack error", err)
+		return err
+	}
+	_, err = c.Conn.Write(pack)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // 初始化链接

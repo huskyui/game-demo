@@ -4,7 +4,7 @@ import "game-demo/ziface"
 
 type Request struct {
 	connection ziface.IConnection
-	data       []byte
+	msg        ziface.IMessage
 }
 
 func (r *Request) GetConnection() ziface.IConnection {
@@ -12,5 +12,9 @@ func (r *Request) GetConnection() ziface.IConnection {
 }
 
 func (r *Request) GetData() []byte {
-	return r.data
+	return r.msg.GetData()
+}
+
+func (r *Request) GetMsgId() uint32 {
+	return r.msg.GetMsgId()
 }
