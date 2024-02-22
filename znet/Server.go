@@ -27,6 +27,7 @@ func (s *Server) AddRouter(msgId uint32, router ziface.IRouter) {
 }
 
 func (s *Server) Start() {
+	s.MsgHandler.StartWorkerPool()
 	marshal, _ := json.Marshal(s)
 	fmt.Println("server config ", string(marshal))
 

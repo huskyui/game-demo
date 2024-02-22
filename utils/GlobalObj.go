@@ -10,9 +10,11 @@ type GlobalObj struct {
 	TcpPort   int
 	Name      string
 
-	Version        string
-	MaxConn        int
-	MaxPackageSize uint32
+	Version           string
+	MaxConn           int
+	MaxPackageSize    uint32
+	WorkerPoolSize    uint32 // 当前worker工作词的大小
+	MaxWorkerPoolSize uint32 // 允许用户开辟多少的worker
 }
 
 //  定义全局对象
@@ -30,12 +32,14 @@ func (g *GlobalObj) Reload() {
 // 初始化GlobalObject
 func init() {
 	GlobalObject = &GlobalObj{
-		Name:           "ZxinTcpServer",
-		Version:        "V0.4",
-		TcpPort:        8999,
-		Host:           "0.0.0.0",
-		MaxConn:        1000,
-		MaxPackageSize: 4096,
+		Name:              "ZxinTcpServer",
+		Version:           "V0.4",
+		TcpPort:           8999,
+		Host:              "0.0.0.0",
+		MaxConn:           1000,
+		MaxPackageSize:    4096,
+		WorkerPoolSize:    8,
+		MaxWorkerPoolSize: 1024,
 	}
 	GlobalObject.Reload()
 }
