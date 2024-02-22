@@ -19,6 +19,8 @@ type Server struct {
 	Port int
 
 	MsgHandler ziface.IMsgHandler
+
+	ConnMgr ziface.IConnManager
 }
 
 func (s *Server) AddRouter(msgId uint32, router ziface.IRouter) {
@@ -55,15 +57,28 @@ func (s *Server) Start() {
 				fmt.Println("Accept err", err)
 				continue
 			}
-			dealConn := NewConnection(conn, cid, s.MsgHandler)
+			if s.ConnMgr.Len() > utils.GlobalObject.MaxConn {
+				conn.Close()
+				fmt.Println("已经达到最大值，拒绝连接")
+				continue
+			}
+
+			dealConn := NewConnection(s, conn, cid, s.MsgHandler)
+
 			cid++
 			go dealConn.Start()
 		}
 	}()
 }
 
+func (s *Server) GetConnMgr() ziface.IConnManager {
+	return s.ConnMgr
+}
+
 func (s *Server) Stop() {
-	// todo 将服务器的资源、状态  回收等等
+	fmt.Println("[stop] zinx server name ", s.Name)
+
+	s.ConnMgr.ClearAll()
 }
 
 func (s *Server) Serve() {
@@ -81,5 +96,6 @@ func NewServer(name string) ziface.IServer {
 		IP:         utils.GlobalObject.Host,
 		Port:       utils.GlobalObject.TcpPort,
 		MsgHandler: NewMsgHandler(),
+		ConnMgr:    NewConnManager(),
 	}
 }

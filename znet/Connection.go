@@ -11,6 +11,8 @@ import (
 
 // 链接模块
 type Connection struct {
+	TcpServer ziface.IServer
+
 	Conn *net.TCPConn
 
 	ConnID uint32
@@ -104,8 +106,8 @@ func (c *Connection) Stop() {
 	}
 	c.IsClose = true
 	c.Conn.Close()
-
 	c.ExitChan <- true
+	c.TcpServer.GetConnMgr().Remove(c)
 	close(c.ExitChan)
 	close(c.msgChan)
 
@@ -139,8 +141,9 @@ func (c *Connection) Send(msgId uint32, data []byte) error {
 }
 
 // 初始化链接
-func NewConnection(conn *net.TCPConn, connId uint32, msgHandler ziface.IMsgHandler) *Connection {
+func NewConnection(server ziface.IServer, conn *net.TCPConn, connId uint32, msgHandler ziface.IMsgHandler) *Connection {
 	c := &Connection{
+		TcpServer:  server,
 		Conn:       conn,
 		ConnID:     connId,
 		IsClose:    false,
@@ -148,5 +151,6 @@ func NewConnection(conn *net.TCPConn, connId uint32, msgHandler ziface.IMsgHandl
 		MsgHandler: msgHandler,
 		msgChan:    make(chan []byte, 1),
 	}
+	c.TcpServer.GetConnMgr().Add(c)
 	return c
 }
