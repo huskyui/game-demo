@@ -7,6 +7,7 @@ import (
 	"game-demo/ziface"
 	"io"
 	"net"
+	"sync"
 )
 
 // 链接模块
@@ -24,6 +25,10 @@ type Connection struct {
 	MsgHandler ziface.IMsgHandler
 
 	msgChan chan []byte
+
+	property map[string]interface{}
+
+	propertyLock sync.RWMutex
 }
 
 func (c *Connection) StartWriter() {
@@ -143,6 +148,28 @@ func (c *Connection) Send(msgId uint32, data []byte) error {
 	return nil
 }
 
+func (c *Connection) SetProperty(key string, value interface{}) {
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+	c.property[key] = value
+}
+
+func (c *Connection) GetProperty(key string) (interface{}, error) {
+	c.propertyLock.RLock()
+	defer c.propertyLock.Unlock()
+	if value, ok := c.property[key]; ok {
+		return value, nil
+	} else {
+		return nil, errors.New("no property")
+	}
+}
+
+func (c *Connection) RemoveProperty(key string) {
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+	delete(c.property, key)
+}
+
 // 初始化链接
 func NewConnection(server ziface.IServer, conn *net.TCPConn, connId uint32, msgHandler ziface.IMsgHandler) *Connection {
 	c := &Connection{
@@ -153,6 +180,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connId uint32, msgH
 		ExitChan:   make(chan bool, 1),
 		MsgHandler: msgHandler,
 		msgChan:    make(chan []byte, 1),
+		property:   make(map[string]interface{}),
 	}
 	c.TcpServer.GetConnMgr().Add(c)
 	return c
