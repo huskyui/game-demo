@@ -97,6 +97,8 @@ func (c *Connection) Start() {
 	go c.StartReader()
 	// 启动writer
 	go c.StartWriter()
+	// call conn start hook
+	c.TcpServer.CallOnConnStart(c)
 }
 
 func (c *Connection) Stop() {
@@ -105,6 +107,7 @@ func (c *Connection) Stop() {
 		return
 	}
 	c.IsClose = true
+	c.TcpServer.CallOnConnStop(c)
 	c.Conn.Close()
 	c.ExitChan <- true
 	c.TcpServer.GetConnMgr().Remove(c)

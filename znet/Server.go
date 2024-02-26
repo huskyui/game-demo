@@ -21,6 +21,10 @@ type Server struct {
 	MsgHandler ziface.IMsgHandler
 
 	ConnMgr ziface.IConnManager
+
+	OnConnStart func(conn ziface.IConnection)
+
+	OnConnStop func(conn ziface.IConnection)
 }
 
 func (s *Server) AddRouter(msgId uint32, router ziface.IRouter) {
@@ -87,6 +91,29 @@ func (s *Server) Serve() {
 	// 阻塞
 
 	select {}
+}
+
+func (s *Server) SetOnConnStart(hookFunc func(connection ziface.IConnection)) {
+	s.OnConnStart = hookFunc
+}
+
+func (s *Server) SetOnConnStop(hookFunc func(connection ziface.IConnection)) {
+	s.OnConnStop = hookFunc
+}
+
+func (s *Server) CallOnConnStart(conn ziface.IConnection) {
+	if s.OnConnStart != nil {
+		fmt.Println("------>CallOnConnStart--------->")
+		s.OnConnStart(conn)
+	}
+
+}
+
+func (s *Server) CallOnConnStop(conn ziface.IConnection) {
+	if s.OnConnStop != nil {
+		fmt.Println("------------->CallOnConnStop------------>")
+		s.OnConnStop(conn)
+	}
 }
 
 func NewServer(name string) ziface.IServer {
