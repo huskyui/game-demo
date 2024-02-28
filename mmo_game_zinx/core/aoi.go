@@ -70,7 +70,7 @@ func (m *AOIManager) GetSurroundGridsByGid(gID int) (grids []*Grid) {
 	if idx > 0 {
 		grids = append(grids, m.grids[gID-1])
 	}
-	if idx < m.MaxX-1 {
+	if idx < m.CntsX-1 {
 		grids = append(grids, m.grids[gID+1])
 	}
 
@@ -89,5 +89,46 @@ func (m *AOIManager) GetSurroundGridsByGid(gID int) (grids []*Grid) {
 		}
 	}
 	return grids
+}
 
+func (m *AOIManager) GetPidsByPos(x, y float32) (playerIDs []int) {
+	gid := m.getGidByPos(x, y)
+	grids := m.GetSurroundGridsByGid(gid)
+
+	for _, grid := range grids {
+		playerIDs = append(playerIDs, grid.GetPlayerIds()...)
+		fmt.Printf("====> grid Id :%d pids :%v", grid.GID, grid.GetPlayerIds())
+	}
+	return
+}
+
+func (m *AOIManager) AddPidToGrid(pId, gId int) {
+	m.grids[gId].Add(pId)
+}
+
+func (m *AOIManager) RemovePidFromGrid(pId, gId int) {
+	m.grids[gId].Remove(pId)
+}
+
+func (m *AOIManager) GetPidsByGid(gID int) (playerIds []int) {
+	return m.grids[gID].GetPlayerIds()
+}
+
+func (m *AOIManager) AddToGridByPos(pid int, x, y float32) {
+	gid := m.getGidByPos(x, y)
+	m.grids[gid].Add(pid)
+}
+
+func (m *AOIManager) RemoveFromGridByPos(pid int, x, y float32) {
+	gid := m.getGidByPos(x, y)
+	m.grids[gid].Remove(pid)
+}
+
+func (m *AOIManager) getGidByPos(x, y float32) int {
+	width := m.gridWidth()
+	height := m.gridHeight()
+	indexX := (int(x) - m.MinX) / width
+	indexY := (int(y) - m.MinY) / height
+	gid := indexY*m.CntsX + indexX
+	return gid
 }
