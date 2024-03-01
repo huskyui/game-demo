@@ -42,7 +42,7 @@ func (s *Server) Start() {
 		// 1.获取tcp的addr
 		addr, err := net.ResolveTCPAddr(s.IPVersion, fmt.Sprintf("%s:%d", s.IP, s.Port))
 		if err != nil {
-			fmt.Println("reslove tcp addr error:", err)
+			fmt.Println("resolve tcp addr error:", err)
 			return
 		}
 		// 监听tcp的地址

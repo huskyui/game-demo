@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"game-demo/utils"
 	"game-demo/ziface"
 )
@@ -38,15 +39,18 @@ func (d *DataPack) Pack(msg ziface.IMessage) ([]byte, error) {
 func (d *DataPack) UnPack(binaryData []byte) (ziface.IMessage, error) {
 	dataBuff := bytes.NewReader(binaryData)
 	msg := &Message{}
+
+	err := binary.Read(dataBuff, binary.LittleEndian, &msg.Id)
+	if err != nil {
+		return nil, err
+	}
 	// 读取dataLen
-	err := binary.Read(dataBuff, binary.LittleEndian, &msg.DataLen)
+	err = binary.Read(dataBuff, binary.LittleEndian, &msg.DataLen)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Read(dataBuff, binary.LittleEndian, &msg.Id)
-	if err != nil {
-		return nil, err
-	}
+
+	fmt.Println("msg", msg, "msgId", msg.GetMsgId(), "msgLen", msg.GetMsgLen())
 	if utils.GlobalObject.MaxPackageSize > 0 && msg.DataLen > utils.GlobalObject.MaxPackageSize {
 		return nil, errors.New("too Large msg package")
 	}
