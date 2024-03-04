@@ -18,13 +18,14 @@ func (d *DataPack) GetHeadLen() uint32 {
 
 func (d *DataPack) Pack(msg ziface.IMessage) ([]byte, error) {
 	dataBuff := bytes.NewBuffer([]byte{})
-	// 写入dataLen
-	err := binary.Write(dataBuff, binary.LittleEndian, msg.GetMsgLen())
+
+	// 写入id
+	err := binary.Write(dataBuff, binary.LittleEndian, msg.GetMsgId())
 	if err != nil {
 		return nil, err
 	}
-	// 写入id
-	err = binary.Write(dataBuff, binary.LittleEndian, msg.GetMsgId())
+	// 写入dataLen
+	err = binary.Write(dataBuff, binary.LittleEndian, msg.GetMsgLen())
 	if err != nil {
 		return nil, err
 	}
